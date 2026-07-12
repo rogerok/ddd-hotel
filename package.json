@@ -1,0 +1,38 @@
+{
+  "name": "ddd-hotel",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=25.0.0"
+  },
+  "scripts": {
+    "start": "node src/index.ts",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@effect/platform": "^0.96.2",
+    "@effect/platform-node": "^0.107.0",
+    "effect": "^3.19.6"
+  },
+  "devDependencies": {
+    "@effect/vitest": "^0.29.0",
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^24.10.1",
+    "@types/ws": "^8.18.1",
+    "@vitest/ui": "^3.2.7",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-perfectionist": "^5.4.0",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.3",
+    "vitest": "^3.2.7"
+  },
+  "packageManager": "pnpm@10.25.0"
+}
