@@ -33,3 +33,5 @@ export type ReservationState =
   | ReservationCheckedOut
   | ReservationNotPlaced
   | ReservationReserved;
+
+export const initial: ReservationNotPlaced = { _tag: "NotPlaced" };

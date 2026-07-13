@@ -15,7 +15,7 @@ import {
   type ReservationEvent,
   type ReservationPlaced,
 } from "./events.ts";
-import { type ReservationState } from "./state.ts";
+import { initial, type ReservationState } from "./state.ts";
 
 export type Decider<Command, State, Event, Error> = {
   readonly initial: State;
@@ -24,7 +24,7 @@ export type Decider<Command, State, Event, Error> = {
   // Если применить это событие к этому состоянию, какое будет новое состояние
   readonly evolve: (state: State, event: Event) => State;
 
-  replay: () => State;
+  // replay: () => State;
 };
 
 export type ReservationDecider = Decider<
@@ -127,6 +127,46 @@ export const checkOutGuest = (
     return [{ _tag: "GuestCheckedOut", occurredAt, reservationId: command.reservationId }];
   });
 
+// evolve - детерминированная функция. На один и тот же (state, event) она всегда возвращает один и тот же state. Это критично для replay
+export const evolve = (state: ReservationState, event: ReservationEvent): ReservationState =>
+  Match.value(event).pipe(
+    Match.tag(
+      "ReservationPlaced",
+      (e): ReservationState => ({
+        _tag: "Reserved",
+        guest: e.guest,
+        range: e.range,
+        reservationId: e.reservationId,
+        room: e.room,
+      }),
+    ),
+    Match.tag(
+      "ReservationCancelled",
+      (e): ReservationState => ({ _tag: "Cancelled", reservationId: e.reservationId }),
+    ),
+
+    // Если state не Reserved (защитная ветка на случай некорректного replay), просто возвращаем state без изменений.
+    Match.tag("GuestCheckedIn", (e): ReservationState => {
+      if (state._tag !== "Reserved") return state;
+
+      return {
+        _tag: "CheckedIn",
+        guest: state.guest,
+        range: state.range,
+        reservationId: e.reservationId,
+        room: state.room,
+      };
+    }),
+    Match.tag(
+      "GuestCheckedOut",
+      (e): ReservationState => ({
+        _tag: "CheckedOut",
+        reservationId: e.reservationId,
+      }),
+    ),
+    Match.exhaustive,
+  );
+
 export const decide = (
   state: ReservationState,
   command: ReservationCommand,
@@ -138,3 +178,22 @@ export const decide = (
     Match.tag("CheckOutGuest", (c) => checkOutGuest(state, c)),
     Match.exhaustive,
   );
+
+export const reservationDecider: ReservationDecider = {
+  decide,
+  evolve,
+  initial,
+};
+
+export const replay = (
+  events: Iterable<ReservationEvent>,
+  decider: ReservationDecider = reservationDecider,
+): ReservationState => {
+  let state = decider.initial;
+
+  for (const event of events) {
+    state = decider.evolve(state, event);
+  }
+
+  return state;
+};
