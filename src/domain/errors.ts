@@ -7,3 +7,10 @@ export class InvalidStateTransition extends Data.TaggedError("InvalidStateTransi
   readonly from: string;
   readonly reservationId: ReservationId;
 }> {}
+
+export class InvalidReservationInput extends Data.TaggedError("InvalidReservationInput")<{
+  readonly cause: unknown;
+  readonly field: string;
+}> {}
+
+export type DomainError = InvalidReservationInput | InvalidStateTransition;

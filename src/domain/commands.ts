@@ -25,12 +25,19 @@ export const CheckOutGuest = Schema.TaggedStruct("CheckOutGuest", {
 });
 export type CheckOutGuest = Schema.Schema.Type<typeof CheckOutGuest>;
 
+export const RescheduleReservation = Schema.TaggedStruct("RescheduleReservation", {
+  range: DateRange,
+  reservationId: ReservationId,
+});
+export type RescheduleReservation = Schema.Schema.Type<typeof RescheduleReservation>;
+
 export const ReservationCommand = Schema.Union(
   PlaceReservation,
   CancelReservation,
   CheckInGuest,
   CheckOutGuest,
   CheckInGuest,
+  RescheduleReservation,
 );
 
 export type ReservationCommand = Schema.Schema.Type<typeof ReservationCommand>;

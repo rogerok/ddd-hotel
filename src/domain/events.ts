@@ -29,11 +29,19 @@ export const GuestCheckedOut = Schema.TaggedStruct("GuestCheckedOut", {
 });
 export type GuestCheckedOut = Schema.Schema.Type<typeof GuestCheckedOut>;
 
+export const ReservationRescheduledEvent = Schema.TaggedStruct("ReservationRescheduled", {
+  occurredAt: Schema.Number,
+  range: DateRange,
+  reservationId: ReservationId,
+});
+export type ReservationRescheduledEvent = Schema.Schema.Type<typeof ReservationRescheduledEvent>;
+
 export const ReservationEvent = Schema.Union(
   ReservationPlaced,
   ReservationCancelled,
   GuestCheckedIn,
   GuestCheckedOut,
+  ReservationRescheduledEvent,
 );
 
 export type ReservationEvent = Schema.Schema.Type<typeof ReservationEvent>;

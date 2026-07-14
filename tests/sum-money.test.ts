@@ -1,6 +1,7 @@
 import { expect } from "vitest";
 
-import { Currency, Money, sumMoney } from "../src/domain/types.ts";
+import { Currency, Money } from "../src/domain/types.ts";
+import { sumMoney } from "../src/domain/utils.ts";
 
 const usd1 = Money.make({
   amountCents: 10,

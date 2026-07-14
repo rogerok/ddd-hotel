@@ -27,11 +27,18 @@ export type ReservationCanceled = {
   readonly reservationId: ReservationId;
 };
 
+export type ReservationRescheduled = {
+  readonly _tag: "Rescheduled";
+  readonly range: DateRange;
+  readonly reservationId: ReservationId;
+};
+
 export type ReservationState =
   | ReservationCanceled
   | ReservationCheckedIn
   | ReservationCheckedOut
   | ReservationNotPlaced
+  | ReservationRescheduled
   | ReservationReserved;
 
 export const initial: ReservationNotPlaced = { _tag: "NotPlaced" };

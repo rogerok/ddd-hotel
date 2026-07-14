@@ -5,15 +5,17 @@ import {
   type CheckInGuest,
   type CheckOutGuest,
   type PlaceReservation,
+  RescheduleReservation,
   type ReservationCommand,
 } from "./commands.ts";
-import { InvalidStateTransition } from "./errors.ts";
+import { DomainError, InvalidStateTransition } from "./errors.ts";
 import {
   type GuestCheckedIn,
   GuestCheckedOut,
   type ReservationCancelled,
   type ReservationEvent,
   type ReservationPlaced,
+  ReservationRescheduledEvent,
 } from "./events.ts";
 import { initial, type ReservationState } from "./state.ts";
 
@@ -31,13 +33,13 @@ export type ReservationDecider = Decider<
   ReservationCommand,
   ReservationState,
   ReservationEvent,
-  InvalidStateTransition
+  DomainError
 >;
 
 export const placeReservation = (
   state: ReservationState,
   command: PlaceReservation,
-): Effect.Effect<ReadonlyArray<ReservationPlaced>, InvalidStateTransition> =>
+): Effect.Effect<ReadonlyArray<ReservationPlaced>, DomainError> =>
   Effect.gen(function* () {
     if (state._tag !== "NotPlaced") {
       return yield* Effect.fail(
@@ -66,7 +68,7 @@ export const placeReservation = (
 export const cancelReservation = (
   state: ReservationState,
   command: CancelReservation,
-): Effect.Effect<ReadonlyArray<ReservationCancelled>, InvalidStateTransition> =>
+): Effect.Effect<ReadonlyArray<ReservationCancelled>, DomainError> =>
   Effect.gen(function* () {
     if (state._tag !== "Reserved") {
       return yield* Effect.fail(
@@ -92,7 +94,7 @@ export const cancelReservation = (
 export const checkInGuest = (
   state: ReservationState,
   command: CheckInGuest,
-): Effect.Effect<ReadonlyArray<GuestCheckedIn>, InvalidStateTransition> =>
+): Effect.Effect<ReadonlyArray<GuestCheckedIn>, DomainError> =>
   Effect.gen(function* () {
     if (state._tag !== "Reserved") {
       return yield* Effect.fail(
@@ -111,7 +113,7 @@ export const checkInGuest = (
 export const checkOutGuest = (
   state: ReservationState,
   command: CheckOutGuest,
-): Effect.Effect<ReadonlyArray<GuestCheckedOut>, InvalidStateTransition> =>
+): Effect.Effect<ReadonlyArray<GuestCheckedOut>, DomainError> =>
   Effect.gen(function* () {
     if (state._tag !== "CheckedIn") {
       return yield* Effect.fail(
@@ -125,6 +127,33 @@ export const checkOutGuest = (
 
     const occurredAt = yield* Clock.currentTimeMillis;
     return [{ _tag: "GuestCheckedOut", occurredAt, reservationId: command.reservationId }];
+  });
+
+export const rescheduleReservation = (
+  state: ReservationState,
+  command: RescheduleReservation,
+): Effect.Effect<ReadonlyArray<ReservationRescheduledEvent>, DomainError> =>
+  Effect.gen(function* () {
+    if (state._tag !== "Reserved") {
+      return yield* Effect.fail(
+        new InvalidStateTransition({
+          command: command._tag,
+          from: state._tag,
+          reservationId: command.reservationId,
+        }),
+      );
+    }
+
+    const occurredAt = yield* Clock.currentTimeMillis;
+
+    return [
+      {
+        _tag: "ReservationRescheduled",
+        occurredAt,
+        range: command.range,
+        reservationId: command.reservationId,
+      },
+    ];
   });
 
 // evolve - детерминированная функция. На один и тот же (state, event) она всегда возвращает один и тот же state. Это критично для replay
@@ -164,18 +193,27 @@ export const evolve = (state: ReservationState, event: ReservationEvent): Reserv
         reservationId: e.reservationId,
       }),
     ),
+    Match.tag(
+      "ReservationRescheduled",
+      (e): ReservationState => ({
+        _tag: "Rescheduled",
+        range: e.range,
+        reservationId: e.reservationId,
+      }),
+    ),
     Match.exhaustive,
   );
 
 export const decide = (
   state: ReservationState,
   command: ReservationCommand,
-): Effect.Effect<ReadonlyArray<ReservationEvent>, InvalidStateTransition> =>
+): Effect.Effect<ReadonlyArray<ReservationEvent>, DomainError> =>
   Match.value(command).pipe(
     Match.tag("PlaceReservation", (c) => placeReservation(state, c)),
     Match.tag("CancelReservation", (c) => cancelReservation(state, c)),
     Match.tag("CheckInGuest", (c) => checkInGuest(state, c)),
     Match.tag("CheckOutGuest", (c) => checkOutGuest(state, c)),
+    Match.tag("RescheduleReservation", (c) => rescheduleReservation(state, c)),
     Match.exhaustive,
   );
 
