@@ -31,9 +31,27 @@ export const GuestEmail = Schema.String.pipe(
 );
 export type GuestEmail = Schema.Schema.Type<typeof GuestEmail>;
 
-export const Day = Schema.Number.pipe(
-  Schema.int(),
-  Schema.greaterThanOrEqualTo(0),
+const dayPattern = /^\d{4}-\d{2}-\d{2}$/;
+const millisecondsPerDay = 86_400_000;
+
+const dayTimestamp = (value: string): number => Date.parse(`${value}T00:00:00.000Z`);
+
+const isCalendarDay = (value: string): true | string => {
+  const timestamp = dayTimestamp(value);
+
+  if (
+    !Number.isFinite(timestamp) ||
+    new Date(timestamp).toISOString().slice(0, 10) !== value
+  ) {
+    return `${value} не является календарной датой YYYY-MM-DD`;
+  }
+
+  return true;
+};
+
+export const Day = Schema.String.pipe(
+  Schema.pattern(dayPattern),
+  Schema.filter(isCalendarDay),
   Schema.brand("Day"),
 );
 export type Day = Schema.Schema.Type<typeof Day>;
@@ -43,12 +61,14 @@ export const DateRange = Schema.Struct({
   checkOut: Day,
 }).pipe(
   Schema.filter((range) => {
-    const interval = range.checkOut - range.checkIn;
-    if (interval < 0) {
+    const intervalDays =
+      (dayTimestamp(range.checkOut) - dayTimestamp(range.checkIn)) / millisecondsPerDay;
+
+    if (intervalDays <= 0) {
       return `checkIn (${range.checkIn}) должен быть строго меньше checkOut (${range.checkOut})`;
     }
 
-    if (interval > MAX_DAYS_DATE_RANGE_INTERVAL) {
+    if (intervalDays > MAX_DAYS_DATE_RANGE_INTERVAL) {
       return `Интервал не может быть более ${MAX_DAYS_DATE_RANGE_INTERVAL} дней`;
     }
 

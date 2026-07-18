@@ -1,10 +1,10 @@
 import { Schema } from "effect";
 
-import { DateRange, GuestEmail, ReservationId, RoomNumber } from "./types.ts";
+import { DateRange, GuestEmail, ReservationId, RoomNumber } from "./value-objects.ts";
 
 export const ReservationPlaced = Schema.TaggedStruct("ReservationPlaced", {
   guest: GuestEmail,
-  occurredAt: Schema.Number,
+  occurredAt: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
   range: DateRange,
   reservationId: ReservationId,
   room: RoomNumber,
@@ -12,25 +12,25 @@ export const ReservationPlaced = Schema.TaggedStruct("ReservationPlaced", {
 export type ReservationPlaced = Schema.Schema.Type<typeof ReservationPlaced>;
 
 export const ReservationCancelled = Schema.TaggedStruct("ReservationCancelled", {
-  occurredAt: Schema.Number,
+  occurredAt: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
   reservationId: ReservationId,
 });
 export type ReservationCancelled = Schema.Schema.Type<typeof ReservationCancelled>;
 
 export const GuestCheckedIn = Schema.TaggedStruct("GuestCheckedIn", {
-  occurredAt: Schema.Number,
+  occurredAt: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
   reservationId: ReservationId,
 });
 export type GuestCheckedIn = Schema.Schema.Type<typeof GuestCheckedIn>;
 
 export const GuestCheckedOut = Schema.TaggedStruct("GuestCheckedOut", {
-  occurredAt: Schema.Number,
+  occurredAt: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
   reservationId: ReservationId,
 });
 export type GuestCheckedOut = Schema.Schema.Type<typeof GuestCheckedOut>;
 
 export const ReservationRescheduledEvent = Schema.TaggedStruct("ReservationRescheduled", {
-  occurredAt: Schema.Number,
+  occurredAt: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
   range: DateRange,
   reservationId: ReservationId,
 });

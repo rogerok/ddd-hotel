@@ -2,6 +2,7 @@ import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import prettier from "eslint-config-prettier";
 import perfectionist from "eslint-plugin-perfectionist";
+import globals from "globals";
 import noComplexInlineType from "./no-complex-inline-type.mjs";
 
 export default [
@@ -97,6 +98,21 @@ export default [
           type: "alphabetical",
         },
       ],
+    },
+  },
+  {
+    files: [
+      "src/reservations/ui/**/*.{ts,tsx}",
+      "src/platform/web/**/*.{ts,tsx}",
+    ],
+    languageOptions: {
+      globals: globals.browser,
+    },
+  },
+  {
+    files: ["src/platform/server/**/*.ts", "vite.config.ts"],
+    languageOptions: {
+      globals: globals.node,
     },
   },
   prettier,

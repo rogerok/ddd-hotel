@@ -1,6 +1,6 @@
 import { Schema } from "effect";
 
-import { DateRange, GuestEmail, ReservationId, RoomNumber } from "./types.ts";
+import { DateRange, GuestEmail, ReservationId, RoomNumber } from "./value-objects.ts";
 
 export const PlaceReservation = Schema.TaggedStruct("PlaceReservation", {
   guest: GuestEmail,
@@ -36,7 +36,6 @@ export const ReservationCommand = Schema.Union(
   CancelReservation,
   CheckInGuest,
   CheckOutGuest,
-  CheckInGuest,
   RescheduleReservation,
 );
 

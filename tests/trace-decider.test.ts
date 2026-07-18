@@ -1,8 +1,8 @@
 import { Effect, Either } from "effect";
 import { expect, vi } from "vitest";
 
-import { type Decider } from "../src/domain/decider.ts";
-import { traceDecider } from "../src/domain/utils.ts";
+import { type Decider } from "../src/reservations/domain/decider.ts";
+import { traceDecider } from "../src/reservations/domain/trace-decider.ts";
 
 type Command = "fail" | "ok";
 type Event = "fail" | "incremented";

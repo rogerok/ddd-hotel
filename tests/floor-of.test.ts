@@ -1,7 +1,7 @@
 import { expect } from "vitest";
 
-import { FloorNumber, RoomNumber } from "../src/domain/types.ts";
-import { floorOf } from "../src/domain/utils.ts";
+import { floorOf } from "../src/reservations/domain/value-object-examples.ts";
+import { FloorNumber, RoomNumber } from "../src/reservations/domain/value-objects.ts";
 
 describe("floorOf", () => {
   it.each([

@@ -5,28 +5,27 @@ import {
   type CheckInGuest,
   type CheckOutGuest,
   type PlaceReservation,
-  RescheduleReservation,
+  type RescheduleReservation,
   type ReservationCommand,
 } from "./commands.ts";
-import { DomainError, InvalidStateTransition } from "./errors.ts";
+import { type DomainError, InvalidStateTransition } from "./errors.ts";
 import {
   type GuestCheckedIn,
-  GuestCheckedOut,
+  type GuestCheckedOut,
   type ReservationCancelled,
   type ReservationEvent,
   type ReservationPlaced,
-  ReservationRescheduledEvent,
+  type ReservationRescheduledEvent,
 } from "./events.ts";
 import { initial, type ReservationState } from "./state.ts";
 
 export type Decider<Command, State, Event, Error> = {
   readonly initial: State;
-  // Если мы в этом состоянии и пришла такая команда, какие события выпустить или какую ошибку вернуть
-  readonly decide: (state: State, command: Command) => Effect.Effect<ReadonlyArray<Event>, Error>;
-  // Если применить это событие к этому состоянию, какое будет новое состояние
+  readonly decide: (
+    state: State,
+    command: Command,
+  ) => Effect.Effect<ReadonlyArray<Event>, Error>;
   readonly evolve: (state: State, event: Event) => State;
-
-  // replay: () => State;
 };
 
 export type ReservationDecider = Decider<
@@ -156,51 +155,45 @@ export const rescheduleReservation = (
     ];
   });
 
-// evolve - детерминированная функция. На один и тот же (state, event) она всегда возвращает один и тот же state. Это критично для replay
 export const evolve = (state: ReservationState, event: ReservationEvent): ReservationState =>
   Match.value(event).pipe(
     Match.tag(
       "ReservationPlaced",
-      (e): ReservationState => ({
+      (event): ReservationState => ({
         _tag: "Reserved",
-        guest: e.guest,
-        range: e.range,
-        reservationId: e.reservationId,
-        room: e.room,
+        guest: event.guest,
+        range: event.range,
+        reservationId: event.reservationId,
+        room: event.room,
       }),
     ),
-    Match.tag(
-      "ReservationCancelled",
-      (e): ReservationState => ({ _tag: "Cancelled", reservationId: e.reservationId }),
-    ),
-
-    // Если state не Reserved (защитная ветка на случай некорректного replay), просто возвращаем state без изменений.
-    Match.tag("GuestCheckedIn", (e): ReservationState => {
+    Match.tag("ReservationCancelled", (event): ReservationState => ({
+      _tag: "Cancelled",
+      reservationId: event.reservationId,
+    })),
+    Match.tag("GuestCheckedIn", (event): ReservationState => {
       if (state._tag !== "Reserved") return state;
 
       return {
         _tag: "CheckedIn",
         guest: state.guest,
         range: state.range,
-        reservationId: e.reservationId,
+        reservationId: event.reservationId,
         room: state.room,
       };
     }),
-    Match.tag(
-      "GuestCheckedOut",
-      (e): ReservationState => ({
-        _tag: "CheckedOut",
-        reservationId: e.reservationId,
-      }),
-    ),
-    Match.tag(
-      "ReservationRescheduled",
-      (e): ReservationState => ({
-        _tag: "Rescheduled",
-        range: e.range,
-        reservationId: e.reservationId,
-      }),
-    ),
+    Match.tag("GuestCheckedOut", (event): ReservationState => ({
+      _tag: "CheckedOut",
+      reservationId: event.reservationId,
+    })),
+    Match.tag("ReservationRescheduled", (event): ReservationState => {
+      if (state._tag !== "Reserved") return state;
+
+      return {
+        ...state,
+        range: event.range,
+      };
+    }),
     Match.exhaustive,
   );
 

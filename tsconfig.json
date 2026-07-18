@@ -2,7 +2,8 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
-    "lib": ["ES2022", "DOM"],
+    "lib": ["ES2022", "ESNext.Collection", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
     "types": ["vitest/globals", "vitest/importMeta", "node"],
     "moduleResolution": "bundler",
     "noEmit": true,
@@ -14,5 +15,5 @@
     "noFallthroughCasesInSwitch": true,
     "useDefineForClassFields": true
   },
-  "include": ["src", "test", "**/*.ts"]
+  "include": ["src", "tests", "**/*.ts", "**/*.tsx"]
 }
